@@ -53,32 +53,44 @@ if input_mode == "Draw Structure (Ketcher)":
     <html>
     <head>
         <script src="https://peter-ertl.com/jsme/JSME_2022-05-01/jsme/jsme.nocache.js"></script>
+        <style>
+            body { margin: 0; padding: 10px; font-family: sans-serif; }
+            #jsme_container { margin-bottom: 10px; }
+        </style>
     </head>
-    <body>
+    <body onload="jsmeOnLoad()">
         <div id="jsme_container"></div>
-        <button onclick="getSmiles()" style="margin: 10px; padding: 10px 20px; background: #ff4b4b; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
-            Get SMILES from Drawing
+        <button onclick="getSmiles()" style="padding: 12px 24px; background: #ff4b4b; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold;">
+            Get SMILES
         </button>
-        <div id="smiles_output" style="margin: 10px; padding: 10px; background: #f0f0f0; border-radius: 5px; font-family: monospace;"></div>
+        <div id="smiles_output" style="margin-top: 10px; padding: 12px; background: #f0f2f6; border-radius: 5px; font-family: monospace; min-height: 20px;"></div>
         
         <script>
             var jsmeApplet;
             
             function jsmeOnLoad() {
-                jsmeApplet = new JSApplet.JSME("jsme_container", "600px", "400px", {
-                    "options": "query,hydrogens"
+                jsmeApplet = new JSApplet.JSME("jsme_container", "100%", "450px", {
+                    "options": "oldlook,star"
                 });
             }
             
             function getSmiles() {
                 if (jsmeApplet) {
                     var smiles = jsmeApplet.smiles();
-                    document.getElementById('smiles_output').innerHTML = '<strong>SMILES:</strong> ' + smiles;
-                    
-                    // Copy to clipboard
-                    navigator.clipboard.writeText(smiles).then(function() {
-                        document.getElementById('smiles_output').innerHTML += ' <span style="color: green;">✓ Copied to clipboard!</span>';
-                    });
+                    if (smiles && smiles.trim() !== "") {
+                        document.getElementById('smiles_output').innerHTML = '<strong>SMILES:</strong> ' + smiles;
+                        
+                        // Copy to clipboard
+                        navigator.clipboard.writeText(smiles).then(function() {
+                            document.getElementById('smiles_output').innerHTML += ' <span style="color: green;">✓ Copied!</span>';
+                        }).catch(function() {
+                            document.getElementById('smiles_output').innerHTML += ' <span style="color: orange;">(Copy manually)</span>';
+                        });
+                    } else {
+                        document.getElementById('smiles_output').innerHTML = '<span style="color: red;">Please draw a molecule first!</span>';
+                    }
+                } else {
+                    document.getElementById('smiles_output').innerHTML = '<span style="color: red;">Editor not loaded yet, please wait...</span>';
                 }
             }
         </script>
@@ -86,9 +98,9 @@ if input_mode == "Draw Structure (Ketcher)":
     </html>
     """
     
-    components.html(jsme_html, height=550)
+    components.html(jsme_html, height=600)
     
-    st.info("💡 Draw your molecule above, click 'Get SMILES from Drawing', then paste the SMILES into the text input on the left to analyze it.")
+    st.info("💡 Draw your molecule above, click 'Get SMILES', then paste the copied SMILES into the text input on the left.")
 
 # Main analysis
 if smiles_input and smiles_input.strip():
