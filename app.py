@@ -44,48 +44,51 @@ with st.sidebar:
         smiles_input = None
 
 
-# Ketcher molecular editor integration
+# JSME molecular editor integration
 if input_mode == "Draw Structure (Ketcher)":
-    st.subheader("Ketcher Molecule Editor")
+    st.subheader("Molecule Editor")
     
-    ketcher_html = """
-    <iframe 
-        id="ketcher-iframe"
-        src="https://lifescience.opensource.epam.com/KetcherDemoSA/index.html" 
-        style="width: 100%; height: 600px; border: 1px solid #ddd; border-radius: 5px;"
-    ></iframe>
-    
-    <script>
-        // Function to get SMILES from Ketcher
-        function getSmiles() {
-            const iframe = document.getElementById('ketcher-iframe');
-            if (iframe && iframe.contentWindow) {
-                iframe.contentWindow.postMessage({
-                    type: 'get-smiles'
-                }, '*');
-            }
-        }
+    jsme_html = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <script src="https://peter-ertl.com/jsme/JSME_2022-05-01/jsme/jsme.nocache.js"></script>
+    </head>
+    <body>
+        <div id="jsme_container"></div>
+        <button onclick="getSmiles()" style="margin: 10px; padding: 10px 20px; background: #ff4b4b; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
+            Get SMILES from Drawing
+        </button>
+        <div id="smiles_output" style="margin: 10px; padding: 10px; background: #f0f0f0; border-radius: 5px; font-family: monospace;"></div>
         
-        // Listen for SMILES data from Ketcher
-        window.addEventListener('message', function(event) {
-            if (event.data && event.data.smiles) {
-                // Send SMILES back to Streamlit
-                window.parent.postMessage({
-                    type: 'streamlit:setComponentValue',
-                    value: event.data.smiles
-                }, '*');
+        <script>
+            var jsmeApplet;
+            
+            function jsmeOnLoad() {
+                jsmeApplet = new JSApplet.JSME("jsme_container", "600px", "400px", {
+                    "options": "query,hydrogens"
+                });
             }
-        });
-    </script>
-    
-    <button onclick="getSmiles()" style="margin-top: 10px; padding: 10px 20px; background: #ff4b4b; color: white; border: none; border-radius: 5px; cursor: pointer;">
-        Get SMILES from Drawing
-    </button>
+            
+            function getSmiles() {
+                if (jsmeApplet) {
+                    var smiles = jsmeApplet.smiles();
+                    document.getElementById('smiles_output').innerHTML = '<strong>SMILES:</strong> ' + smiles;
+                    
+                    // Copy to clipboard
+                    navigator.clipboard.writeText(smiles).then(function() {
+                        document.getElementById('smiles_output').innerHTML += ' <span style="color: green;">✓ Copied to clipboard!</span>';
+                    });
+                }
+            }
+        </script>
+    </body>
+    </html>
     """
     
-    components.html(ketcher_html, height=700)
+    components.html(jsme_html, height=550)
     
-    st.info("Note: Draw your molecule in Ketcher above, then click 'Get SMILES from Drawing' to analyze it.")
+    st.info("💡 Draw your molecule above, click 'Get SMILES from Drawing', then paste the SMILES into the text input on the left to analyze it.")
 
 # Main analysis
 if smiles_input and smiles_input.strip():
