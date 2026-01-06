@@ -26,14 +26,66 @@ EXAMPLE_MOLECULES = {
 }
 
 
-# Sidebar controls (kept minimal)
+# Sidebar controls
 with st.sidebar:
-    smiles_input = st.text_area(
-        "SMILES:",
-        placeholder="e.g., c1ccccc1",
-        height=100
+    input_mode = st.radio(
+        "Input Mode:",
+        ["SMILES Text", "Draw Structure (Ketcher)"]
     )
+    
+    if input_mode == "SMILES Text":
+        smiles_input = st.text_area(
+            "SMILES:",
+            placeholder="e.g., c1ccccc1",
+            height=100
+        )
+    else:
+        st.info("Draw your molecule below and click 'Get SMILES' to analyze")
+        smiles_input = None
 
+
+# Ketcher molecular editor integration
+if input_mode == "Draw Structure (Ketcher)":
+    st.subheader("Ketcher Molecule Editor")
+    
+    ketcher_html = """
+    <iframe 
+        id="ketcher-iframe"
+        src="https://lifescience.opensource.epam.com/KetcherDemoSA/index.html" 
+        style="width: 100%; height: 600px; border: 1px solid #ddd; border-radius: 5px;"
+    ></iframe>
+    
+    <script>
+        // Function to get SMILES from Ketcher
+        function getSmiles() {
+            const iframe = document.getElementById('ketcher-iframe');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.postMessage({
+                    type: 'get-smiles'
+                }, '*');
+            }
+        }
+        
+        // Listen for SMILES data from Ketcher
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.smiles) {
+                // Send SMILES back to Streamlit
+                window.parent.postMessage({
+                    type: 'streamlit:setComponentValue',
+                    value: event.data.smiles
+                }, '*');
+            }
+        });
+    </script>
+    
+    <button onclick="getSmiles()" style="margin-top: 10px; padding: 10px 20px; background: #ff4b4b; color: white; border: none; border-radius: 5px; cursor: pointer;">
+        Get SMILES from Drawing
+    </button>
+    """
+    
+    components.html(ketcher_html, height=700)
+    
+    st.info("Note: Draw your molecule in Ketcher above, then click 'Get SMILES from Drawing' to analyze it.")
 
 # Main analysis
 if smiles_input and smiles_input.strip():
